@@ -12,13 +12,13 @@ import (
 	"github.com/hashicorp/nomad/plugins/drivers"
 )
 
-// taskHandle should store all relevant runtime information
-// such as process ID if this is a local task or other meta
-// data if this driver deals with external APIs
+// taskHandle should store all relevant runtime information such as process ID
+// if this is a local task or other meta data if this driver deals with external
+// APIs
 type taskHandle struct {
-	// stateLock syncs access to all fields below
-	stateLock sync.RWMutex
+	state sync.RWMutex
 
+	// Required fields.
 	logger       hclog.Logger
 	exec         executor.Executor
 	pluginClient *plugin.Client
@@ -28,14 +28,13 @@ type taskHandle struct {
 	completedAt  time.Time
 	exitResult   *drivers.ExitResult
 
-	// TODO: add any extra relevant information about the task.
+	// Extra fields.
 	pid int
 }
 
 func (h *taskHandle) TaskStatus() *drivers.TaskStatus {
-	h.stateLock.RLock()
-	defer h.stateLock.RUnlock()
-
+	h.state.RLock()
+	defer h.state.RUnlock()
 	return &drivers.TaskStatus{
 		ID:          h.taskConfig.ID,
 		Name:        h.taskConfig.Name,
@@ -50,22 +49,21 @@ func (h *taskHandle) TaskStatus() *drivers.TaskStatus {
 }
 
 func (h *taskHandle) IsRunning() bool {
-	h.stateLock.RLock()
-	defer h.stateLock.RUnlock()
+	h.state.RLock()
+	defer h.state.RUnlock()
 	return h.procState == drivers.TaskStateRunning
 }
 
 func (h *taskHandle) run() {
-	h.stateLock.Lock()
+	h.state.Lock()
 	if h.exitResult == nil {
 		h.exitResult = &drivers.ExitResult{}
 	}
-	h.stateLock.Unlock()
+	h.state.Unlock()
 
-	// TODO: wait for your task to complete and upate its state.
 	ps, err := h.exec.Wait(context.Background())
-	h.stateLock.Lock()
-	defer h.stateLock.Unlock()
+	h.state.Lock()
+	defer h.state.Unlock()
 
 	if err != nil {
 		h.exitResult.Err = err

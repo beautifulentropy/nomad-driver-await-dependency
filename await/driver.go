@@ -21,13 +21,13 @@ import (
 )
 
 const (
-	// pluginName is the name of the plugin
-	// this is used for logging and (along with the version) for uniquely
-	// identifying plugin binaries fingerprinted by the client
-	pluginName = "hello-world-example"
+	// pluginName is the name of the plugin this is used for logging and (along
+	// with the version) for uniquely identifying plugin binaries fingerprinted
+	// by the client
+	pluginName = "await-dependency"
 
-	// pluginVersion allows the client to identify and use newer versions of
-	// an installed plugin
+	// pluginVersion allows the client to identify and use newer versions of an
+	// installed plugin
 	pluginVersion = "v0.1.0"
 
 	// fingerprintPeriod is the interval at which the plugin will send
@@ -35,9 +35,8 @@ const (
 	fingerprintPeriod = 30 * time.Second
 
 	// taskHandleVersion is the version of task handle which this plugin sets
-	// and understands how to decode
-	// this is used to allow modification and migration of the task schema
-	// used by the plugin
+	// and understands how to decode this is used to allow modification and
+	// migration of the task schema used by the plugin
 	taskHandleVersion = 1
 )
 
@@ -50,16 +49,15 @@ var (
 		Name:              pluginName,
 	}
 
-	// configSpec is the specification of the plugin's configuration
-	// this is used to validate the configuration specified for the plugin
-	// on the client.
-	// this is not global, but can be specified on a per-client basis.
+	// configSpec is the specification of the plugin's configuration this is
+	// used to validate the configuration specified for the plugin on the
+	// client. this is not global, but can be specified on a per-client basis.
 	configSpec = hclspec.NewObject(map[string]*hclspec.Spec{
 		// TODO: define plugin's agent configuration schema.
 		//
 		// The schema should be defined using HCL specs and it will be used to
-		// validate the agent configuration provided by the user in the
-		// `plugin` stanza (https://www.nomadproject.io/docs/configuration/plugin.html).
+		// validate the agent configuration provided by the user in the `plugin`
+		// stanza (https://www.nomadproject.io/docs/configuration/plugin.html).
 		//
 		// For example, for the schema below a valid configuration would be:
 		//
@@ -74,16 +72,15 @@ var (
 		),
 	})
 
-	// taskConfigSpec is the specification of the plugin's configuration for
-	// a task
-	// this is used to validated the configuration specified for the plugin
+	// taskConfigSpec is the specification of the plugin's configuration for a
+	// task this is used to validated the configuration specified for the plugin
 	// when a job is submitted.
 	taskConfigSpec = hclspec.NewObject(map[string]*hclspec.Spec{
 		// TODO: define plugin's task configuration schema
 		//
 		// The schema should be defined using HCL specs and it will be used to
-		// validate the task configuration provided by the user when they
-		// submit a job.
+		// validate the task configuration provided by the user when they submit
+		// a job.
 		//
 		// For example, for the schema below a valid task would be:
 		//   job "example" {
@@ -102,8 +99,8 @@ var (
 		),
 	})
 
-	// capabilities indicates what optional features this driver supports
-	// this should be set according to the target run time.
+	// capabilities indicates what optional features this driver supports this
+	// should be set according to the target run time.
 	capabilities = &drivers.Capabilities{
 		// TODO: set plugin's capabilities
 		//
@@ -125,8 +122,8 @@ type Config struct {
 	Shell string `codec:"shell"`
 }
 
-// TaskConfig contains configuration information for a task that runs with
-// this plugin
+// TaskConfig contains configuration information for a task that runs with this
+// plugin
 type TaskConfig struct {
 	// TODO: create decoded plugin task configuration struct
 	//
@@ -137,27 +134,25 @@ type TaskConfig struct {
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
-// Nomad client.
-// This information is needed to rebuild the task state and handler during
-// recovery.
+// Nomad client. This information is needed to rebuild the task state and
+// handler during recovery.
 type TaskState struct {
 	ReattachConfig *structs.ReattachConfig
 	TaskConfig     *drivers.TaskConfig
 	StartedAt      time.Time
 
-	// TODO: add any extra important values that must be persisted in order
-	// to restore a task.
+	// TODO: add any extra important values that must be persisted in order to
+	// restore a task.
 	//
 	// The plugin keeps track of its running tasks in a in-memory data
-	// structure. If the plugin crashes, this data will be lost, so Nomad
-	// will respawn a new instance of the plugin and try to restore its
-	// in-memory representation of the running tasks using the RecoverTask()
-	// method below.
+	// structure. If the plugin crashes, this data will be lost, so Nomad will
+	// respawn a new instance of the plugin and try to restore its in-memory
+	// representation of the running tasks using the RecoverTask() method below.
 	Pid int
 }
 
-// HelloDriverPlugin is an example driver plugin. When provisioned in a job,
-// the taks will output a greet specified by the user.
+// HelloDriverPlugin is an example driver plugin. When provisioned in a job, the
+// taks will output a greet specified by the user.
 type HelloDriverPlugin struct {
 	// eventer is used to handle multiplexing of TaskEvents calls such that an
 	// event can be broadcast to all callers
@@ -176,8 +171,8 @@ type HelloDriverPlugin struct {
 	// coordinate shutdown
 	ctx context.Context
 
-	// signalShutdown is called when the driver is shutting down and cancels
-	// the ctx passed to any subsystems
+	// signalShutdown is called when the driver is shutting down and cancels the
+	// ctx passed to any subsystems
 	signalShutdown context.CancelFunc
 
 	// logger will log to the Nomad agent
@@ -223,10 +218,10 @@ func (d *HelloDriverPlugin) SetConfig(cfg *base.Config) error {
 
 	// TODO: parse and validated any configuration value if necessary.
 	//
-	// If your driver agent configuration requires any complex validation
-	// (some dependency between attributes) or special data parsing (the
-	// string "10s" into a time.Interval) you can do it here and update the
-	// value in d.config.
+	// If your driver agent configuration requires any complex validation (some
+	// dependency between attributes) or special data parsing (the string "10s"
+	// into a time.Interval) you can do it here and update the value in
+	// d.config.
 	//
 	// In the example below we check if the shell specified by the user is
 	// supported by the plugin.
@@ -304,10 +299,10 @@ func (d *HelloDriverPlugin) buildFingerprint() *drivers.Fingerprint {
 	// If the plugin reports to be unhealthy, or doesn't send any fingerprint
 	// data in the expected interval of time, Nomad will restart it.
 	//
-	// Node attributes can be used to report any relevant information about
-	// the node in which the plugin is running (specific library availability,
-	// installed versions of a software etc.). These attributes can then be
-	// used by an operator to set job constrains.
+	// Node attributes can be used to report any relevant information about the
+	// node in which the plugin is running (specific library availability,
+	// installed versions of a software etc.). These attributes can then be used
+	// by an operator to set job constrains.
 	//
 	// In the example below we check if the shell specified by the user exists
 	// in the node.
@@ -354,9 +349,8 @@ func (d *HelloDriverPlugin) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHan
 	// TODO: implement driver specific mechanism to start the task.
 	//
 	// Once the task is started you will need to store any relevant runtime
-	// information in a taskHandle and TaskState. The taskHandle will be
-	// stored in-memory in the plugin and will be used to interact with the
-	// task.
+	// information in a taskHandle and TaskState. The taskHandle will be stored
+	// in-memory in the plugin and will be used to interact with the task.
 	//
 	// The TaskState will be returned to the Nomad client inside a
 	// drivers.TaskHandle instance. This TaskHandle will be sent back to plugin
@@ -442,8 +436,8 @@ func (d *HelloDriverPlugin) RecoverTask(handle *drivers.TaskHandle) error {
 	// Recovering a task involves recreating and storing a taskHandle as if the
 	// task was just started.
 	//
-	// In the example below we use the executor to re-attach to the process
-	// that was created when the task first started.
+	// In the example below we use the executor to re-attach to the process that
+	// was created when the task first started.
 	plugRC, err := structs.ReattachConfigToGoPlugin(taskState.ReattachConfig)
 	if err != nil {
 		return fmt.Errorf("failed to build ReattachConfig from taskConfig state: %v", err)
@@ -519,7 +513,8 @@ func (d *HelloDriverPlugin) handleWait(ctx context.Context, handle *taskHandle, 
 	}
 }
 
-// StopTask stops a running task with the given signal and within the timeout window.
+// StopTask stops a running task with the given signal and within the timeout
+// window.
 func (d *HelloDriverPlugin) StopTask(taskID string, timeout time.Duration, signal string) error {
 	handle, ok := d.tasks.Get(taskID)
 	if !ok {
@@ -532,9 +527,8 @@ func (d *HelloDriverPlugin) StopTask(taskID string, timeout time.Duration, signa
 	// given signal to it. If the task does not stop during the given timeout,
 	// the driver must forcefully kill the task.
 	//
-	// In the example below we let the executor handle the task shutdown
-	// process for us, but you might need to customize this for your own
-	// implementation.
+	// In the example below we let the executor handle the task shutdown process
+	// for us, but you might need to customize this for your own implementation.
 	if err := handle.exec.Shutdown(signal, timeout); err != nil {
 		if handle.pluginClient.Exited() {
 			return nil
@@ -568,10 +562,8 @@ func (d *HelloDriverPlugin) DestroyTask(taskID string, force bool) error {
 		if err := handle.exec.Shutdown("", 0); err != nil {
 			handle.logger.Error("destroying executor failed", "err", err)
 		}
-
 		handle.pluginClient.Kill()
 	}
-
 	d.tasks.Delete(taskID)
 	return nil
 }
@@ -582,46 +574,32 @@ func (d *HelloDriverPlugin) InspectTask(taskID string) (*drivers.TaskStatus, err
 	if !ok {
 		return nil, drivers.ErrTaskNotFound
 	}
-
 	return handle.TaskStatus(), nil
 }
 
-// TaskStats returns a channel which the driver should send stats to at the given interval.
+// TaskStats returns a channel which the driver should send stats to at the
+// given interval.
 func (d *HelloDriverPlugin) TaskStats(ctx context.Context, taskID string, interval time.Duration) (<-chan *drivers.TaskResourceUsage, error) {
 	handle, ok := d.tasks.Get(taskID)
 	if !ok {
 		return nil, drivers.ErrTaskNotFound
 	}
-
-	// TODO: implement driver specific logic to send task stats.
-	//
-	// This function returns a channel that Nomad will use to listen for task
-	// stats (e.g., CPU and memory usage) in a given interval. It should send
-	// stats until the context is canceled or the task stops running.
-	//
-	// In the example below we use the Stats function provided by the executor,
-	// but you can build a set of functions similar to the fingerprint process.
 	return handle.exec.Stats(ctx, interval)
 }
 
-// TaskEvents returns a channel that the plugin can use to emit task related events.
+// TaskEvents returns a channel that the plugin can use to emit task related
+// events.
 func (d *HelloDriverPlugin) TaskEvents(ctx context.Context) (<-chan *drivers.TaskEvent, error) {
 	return d.eventer.TaskEvents(ctx)
 }
 
 // SignalTask forwards a signal to a task.
-// This is an optional capability.
 func (d *HelloDriverPlugin) SignalTask(taskID string, signal string) error {
 	handle, ok := d.tasks.Get(taskID)
 	if !ok {
 		return drivers.ErrTaskNotFound
 	}
 
-	// TODO: implement driver specific signal handling logic.
-	//
-	// The given signal must be forwarded to the target taskID. If this plugin
-	// doesn't support receiving signals (capability SendSignals is set to
-	// false) you can just return nil.
 	sig := os.Interrupt
 	if s, ok := signals.SignalLookup[signal]; ok {
 		sig = s
@@ -633,8 +611,6 @@ func (d *HelloDriverPlugin) SignalTask(taskID string, signal string) error {
 }
 
 // ExecTask returns the result of executing the given command inside a task.
-// This is an optional capability.
 func (d *HelloDriverPlugin) ExecTask(taskID string, cmd []string, timeout time.Duration) (*drivers.ExecTaskResult, error) {
-	// TODO: implement driver specific logic to execute commands in a task.
-	return nil, errors.New("This driver does not support exec")
+	return nil, errors.New("this driver does not support exec")
 }
